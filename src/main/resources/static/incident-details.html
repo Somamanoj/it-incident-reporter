@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incident Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div id="topbar" class="topbar"></div>
+<div class="page">
+    <div id="alert" class="alert-hidden"></div>
+    <div class="panel">
+        <div class="d-flex justify-content-between">
+            <div>
+                <p class="text-muted mb-1" id="incidentId"></p>
+                <h3 id="title"></h3>
+            </div>
+            <div id="flags"></div>
+        </div>
+        <p id="description"></p>
+        <p class="mb-0 text-muted" id="meta"></p>
+    </div>
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="panel">
+                <h5>Resolution comments</h5>
+                <div id="comments"></div>
+                <form id="commentForm" class="mt-3 d-none">
+                    <textarea class="form-control mb-2" name="comment" rows="3" required maxlength="2000" placeholder="Add a resolution note"></textarea>
+                    <button class="btn btn-primary btn-sm" type="submit">Add comment</button>
+                </form>
+            </div>
+            <div class="panel">
+                <h5>Incident history</h5>
+                <ul class="list-group" id="history"></ul>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div id="actions" class="panel d-none">
+                <h5>Support actions</h5>
+                <form id="statusForm" class="mb-3">
+                    <label class="form-label">Update status</label>
+                    <select class="form-select mb-2" name="status">
+                        <option>OPEN</option><option>ASSIGNED</option><option>IN_PROGRESS</option>
+                        <option>RESOLVED</option><option>CLOSED</option>
+                    </select>
+                    <input class="form-control mb-2" name="comment" placeholder="Optional comment">
+                    <button class="btn btn-outline-primary btn-sm" type="submit">Save status</button>
+                </form>
+                <form id="assignForm">
+                    <label class="form-label">Assign engineer</label>
+                    <select class="form-select mb-2" name="engineerId" id="engineerId"></select>
+                    <button class="btn btn-outline-primary btn-sm" type="submit">Assign</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script>
+    const session = auth.require(["EMPLOYEE", "SUPPORT_ENGINEER", "ADMIN"]);
+    const id = new URLSearchParams(window.location.search).get("id");
+    if (session && id) {
+        renderNav("/incidents.html");
+        const canAct = session.role === "ADMIN" || session.role === "SUPPORT_ENGINEER";
+        if (canAct) {
+            document.getElementById("actions").classList.remove("d-none");
+            document.getElementById("commentForm").classList.remove("d-none");
+        }
+        load();
+    }
+
+    async function load() {
+        try {
+            const [incident, history] = await Promise.all([
+                api.get("/api/incidents/" + id),
+                api.get("/api/incidents/" + id + "/history")
+            ]);
+            document.getElementById("incidentId").textContent = "INC-" + incident.id;
+            document.getElementById("title").textContent = incident.title;
+            document.getElementById("description").textContent = incident.description;
+            document.getElementById("flags").innerHTML = priorityBadge(incident.priority) + " " + statusBadge(incident.status);
+            document.getElementById("meta").textContent =
+                "Category: " + incident.category +
+                " · Reporter: " + incident.reporter.fullName +
+                " · Assignee: " + (incident.assignee ? incident.assignee.fullName : "Unassigned") +
+                " · Created: " + formatDate(incident.createdAt) +
+                " · Resolved: " + formatDate(incident.resolvedAt);
+            document.getElementById("comments").innerHTML = (incident.comments || []).map(function (c) {
+                return '<div class="border rounded p-2 mb-2"><strong>' + c.authorName + "</strong>" +
+                    '<div class="small text-muted">' + formatDate(c.createdAt) + "</div><div>" + c.comment + "</div></div>";
+            }).join("") || '<p class="text-muted">No comments yet.</p>';
+            document.getElementById("history").innerHTML = history.map(function (h) {
+                return '<li class="list-group-item"><strong>' + h.action + "</strong> " +
+                    (h.oldValue ? h.oldValue + " → " : "") + (h.newValue || "") +
+                    "<div class=\"small text-muted\">" + h.changedBy + " · " + formatDate(h.createdAt) + "</div>" +
+                    (h.details ? "<div>" + h.details + "</div>" : "") + "</li>";
+            }).join("") || '<li class="list-group-item text-muted">No history.</li>';
+            if (canAct) {
+                const engineers = await api.get("/api/engineers");
+                document.getElementById("engineerId").innerHTML = engineers.map(function (e) {
+                    return '<option value="' + e.id + '">' + e.fullName + "</option>";
+                }).join("");
+            }
+        } catch (error) {
+            showAlert("alert", error.message);
+        }
+    }
+
+    document.getElementById("commentForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+        try {
+            await api.post("/api/incidents/" + id + "/comments", { comment: new FormData(event.target).get("comment") });
+            event.target.reset();
+            load();
+        } catch (error) { showAlert("alert", error.message); }
+    });
+    document.getElementById("statusForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+        const form = new FormData(event.target);
+        try {
+            await api.put("/api/incidents/" + id + "/status", { status: form.get("status"), comment: form.get("comment") });
+            load();
+        } catch (error) { showAlert("alert", error.message); }
+    });
+    document.getElementById("assignForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+        try {
+            await api.put("/api/incidents/" + id + "/assign", { engineerId: Number(new FormData(event.target).get("engineerId")) });
+            load();
+        } catch (error) { showAlert("alert", error.message); }
+    });
+</script>
+</body>
+</html>

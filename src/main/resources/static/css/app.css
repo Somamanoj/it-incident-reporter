@@ -1,0 +1,138 @@
+:root {
+    --navy: #0f2744;
+    --navy-dark: #0a1b30;
+    --teal: #1a7a6d;
+    --teal-hover: #146258;
+    --page: #eef2f6;
+    --card: #ffffff;
+    --muted: #5b6b7c;
+    --line: #d7dee8;
+    --critical: #b42318;
+    --high: #c2410c;
+    --medium: #b45309;
+    --low: #2563eb;
+    --open: #1d4ed8;
+    --progress: #7c3aed;
+    --resolved: #15803d;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    background: var(--page);
+    color: #1f2933;
+}
+
+.auth-body {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #0a1b30 0%, #143a5c 55%, #1a7a6d 130%);
+}
+
+.auth-card {
+    width: min(440px, 92vw);
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+}
+
+.brand {
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--navy);
+    margin-bottom: 0.25rem;
+}
+
+.topbar {
+    background: var(--navy);
+    color: #fff;
+    padding: 0.85rem 1.4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.topbar a {
+    color: #d7e8f5;
+    text-decoration: none;
+    margin-right: 1rem;
+    font-size: 0.95rem;
+}
+
+.topbar a:hover { color: #fff; }
+
+.page {
+    max-width: 1180px;
+    margin: 1.5rem auto;
+    padding: 0 1rem 2rem;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 1rem;
+}
+
+.stat-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+}
+
+.stat-card h3 {
+    margin: 0;
+    font-size: 1.7rem;
+}
+
+.stat-card p {
+    margin: 0.3rem 0 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 1.2rem;
+    margin-top: 1.2rem;
+}
+
+.btn-primary {
+    background: var(--teal);
+    border-color: var(--teal);
+}
+
+.btn-primary:hover {
+    background: var(--teal-hover);
+    border-color: var(--teal-hover);
+}
+
+.badge-status, .badge-priority {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.table thead {
+    background: #f4f7fb;
+}
+
+.alert-hidden { display: none; }
+
+.user-chip {
+    font-size: 0.85rem;
+    color: #c9d7e6;
+}
+
+footer.app-footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    padding: 1.5rem;
+}
